@@ -8,11 +8,13 @@ const appPort = 3000;
 // the "store" of the app
 const projectStore = [];
 
+//to control the number of requests made
+let numOfRequests = 0;
 
 server.use(express.json());
 
 //register global middleware function 
-server.use(requestLog);
+server.use(requestLog, logNumberOfRequest);
 //Routes
 
 //POST /projects  with 'id' and 'title'
@@ -36,14 +38,12 @@ server.get('/projects', (req, res) => {
 //PUT /projects/:id change only the title of the project
 server.put('/projects/:id', checkProjectExists, (req, res) => {
   const { title } = req.body;
-  console.log('title from body', title);
 
   const id = req.params.id;
-  console.log('given id', id);
+  
 
   const projIdx = findProjectIndexById(id);
-  console.log(projIdx);
-
+  
   if (projIdx != -1) {
     changeTitle(projIdx, title);
   }
@@ -107,6 +107,12 @@ function requestLog(req, res, next) {
   console.log(`${req.method}:${req.url}`);
   next();
   console.timeEnd('Request');
+}
+
+function logNumberOfRequest(req, res, next){
+  numOfRequests++;
+  next();
+  console.log(`Total number of processd requests: ${numOfRequests}` );
 }
 
 function checkProjectExists(req, res, next) {
