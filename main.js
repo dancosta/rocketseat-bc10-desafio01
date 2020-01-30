@@ -29,23 +29,49 @@ server.post('/projects', (req, res) => {
 });
 
 //GET /projects
-server.get('/projects', (req,res)=>{
+server.get('/projects', (req, res) => {
   return res.send(projectStore);
 });
 
 //PUT /projects/:id change only the title of the project
-server.put('/projects/:id', (req,res)=>{
+server.put('/projects/:id', checkProjectExists, (req, res) => {
   const { title } = req.body;
-  console.log('title from body', title );
-  
+  console.log('title from body', title);
+
   const id = req.params.id;
   console.log('given id', id);
-  
+
   const projIdx = findProjectIndexById(id);
   console.log(projIdx);
-  
-  if (projIdx!=-1){
-    changeTitle(projIdx,title);
+
+  if (projIdx != -1) {
+    changeTitle(projIdx, title);
+  }
+
+  return res.send(projectStore);
+});
+
+//DELETE /projects/:id
+server.delete('/projects/:id', checkProjectExists, (req, res) => {
+  const id = req.params.id;
+
+  const projIdx = findProjectIndexById(id);
+  if (projIdx != -1) {
+    projectStore.splice(projIdx, 1);
+  }
+
+  return res.send(projectStore);
+
+});
+
+//POST /projects/:id/tasks to create a task with the given TITLE to the given project id
+server.post('/projects/:id/tasks', checkProjectExists, (req,res)=>{
+  const id = req.params.id;
+  const { title } = req.body;
+
+  const projIdx = findProjectIndexById(id);
+  if (projIdx != -1) {
+    projectStore[projIdx].tasks.push(title);
   }
 
   return res.send(projectStore);
@@ -71,7 +97,7 @@ function findProjectIndexById(id) {
   return projectStore.findIndex(proj => proj.id === id);
 }
 
-function changeTitle(index, title){
+function changeTitle(index, title) {
   projectStore[index].title = title;
 }
 
@@ -83,10 +109,10 @@ function requestLog(req, res, next) {
   console.timeEnd('Request');
 }
 
-function checkProjectExists(req, res, next){
+function checkProjectExists(req, res, next) {
   const { id } = req.params;
-  if (!findProjectById(id)){
-    res.status(400).send({error: `project id${id} does not exist`});
+  if (!findProjectById(id)) {
+    res.status(400).send({ error: `project id ${id} does not exist` });
   } else {
     next();
   }
